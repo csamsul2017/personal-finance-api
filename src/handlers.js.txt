@@ -24,6 +24,7 @@ const postTransactionHandler = (request, h) => {
   return h
     .response({
       status: 'success',
+      message: 'data successfully added',
       data: newTransaction,
     })
     .code(201);
