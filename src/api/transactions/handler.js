@@ -6,6 +6,8 @@ class TransactionsHandler {
     this.postTransactionHandler = this.postTransactionHandler.bind(this);
     this.getAllTransactionsHandler = this.getAllTransactionsHandler.bind(this);
     this.getTransactionByIdHandler = this.getTransactionByIdHandler.bind(this);
+    this.putTransactionByIdHandler = this.putTransactionByIdHandler.bind(this);
+    this.deleteTransactionByIdHandler = this.deleteTransactionByIdHandler.bind(this);
   }
 
   postTransactionHandler(request, h) {
@@ -63,6 +65,49 @@ class TransactionsHandler {
         status: 'fail',
         message: error.message,
       });
+    }
+  }
+
+  putTransactionByIdHandler(request, h) {
+    try {
+      const { id } = request.params;
+      const { type, amount, category, description } = request.payload;
+      this._service.editTransactionById({ id, type, amount, category, description });
+
+      return h
+        .response({
+          status: 'success',
+          message: 'transaction successfully updated',
+        })
+        .code(200);
+    } catch (error) {
+      return h
+        .response({
+          status: 'fail',
+          message: error.message,
+        })
+        .code(404);
+    }
+  }
+
+  deleteTransactionByIdHandler(request, h) {
+    try {
+      const { id } = request.params;
+      this._service.deleteTransactionById(id);
+
+      return h
+        .response({
+          status: 'success',
+          message: 'transaction successfully deleted',
+        })
+        .code(200);
+    } catch (error) {
+      return h
+        .response({
+          status: 'fail',
+          message: error.message,
+        })
+        .code(404);
     }
   }
 }

@@ -35,6 +35,33 @@ class TransactionsService {
 
     return transaction;
   }
+
+  editTransactionById({ id, type, amount, category, description }) {
+    const index = this._transactions.findIndex(transaction => transaction.id === id);
+    if (index === -1) {
+      throw new Error('transaction failed to edit, id not found');
+    }
+    const updatedAt = new Date().toISOString();
+
+    this._transactions[index] = {
+      ...this._transactions[index],
+      type,
+      amount,
+      category,
+      description,
+      updatedAt,
+    };
+  }
+
+  deleteTransactionById(id) {
+    const index = this._transactions.findIndex(transaction => transaction.id === id);
+
+    if (index === -1) {
+      throw new Error('transaction failed to delete, id not found');
+    }
+
+    this._transactions.splice(index, 1);
+  }
 }
 
 module.exports = TransactionsService;
