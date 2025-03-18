@@ -13,17 +13,27 @@ class TransactionsService {
     const newTransaction = { id, type, amount, category, description, createdAt, updatedAt };
     this._transactions.push(newTransaction);
 
-    const isSuccess = this._transactions.some(transaction => transaction.id === id);
+    const transaction = this._transactions.filter(transaction => transaction.id === id)[0];
 
-    if (!isSuccess) {
+    if (!transaction) {
       throw new Error('data failed to add');
     }
 
-    return id;
+    return transaction;
   }
 
   getAllTransactions() {
     return this._transactions;
+  }
+
+  getTransactionById(id) {
+    const transaction = this._transactions.filter(transaction => transaction.id === id)[0];
+
+    if (!transaction) {
+      throw new Error('transaction not found');
+    }
+
+    return transaction;
   }
 }
 
