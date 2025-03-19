@@ -4,6 +4,7 @@ const Hapi = require('@hapi/hapi');
 const transactions = require('./api/transactions');
 const TransactionsService = require('./services/inMemory/TransactionsService');
 const TransactionsValidator = require('./validator/transactions');
+const ClientError = require('./exceptions/ClientError');
 
 const init = async () => {
   const transactionsService = new TransactionsService();
@@ -23,6 +24,23 @@ const init = async () => {
       service: transactionsService,
       validator: TransactionsValidator,
     },
+  });
+
+  server.ext('onPreResponse', (request, h) => {
+    // mendapatkan konteks response dari request
+    const { response } = request;
+
+    // penanganan client error secara internal.
+    if (response instanceof ClientError) {
+      const newResponse = h.response({
+        status: 'fail',
+        message: response.message,
+      });
+      newResponse.code(response.statusCode);
+      return newResponse;
+    }
+
+    return h.continue;
   });
 
   await server.start();

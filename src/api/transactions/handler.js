@@ -1,5 +1,3 @@
-const transactions = require('.');
-
 class TransactionsHandler {
   constructor(service, validator) {
     this._service = service;
@@ -12,26 +10,17 @@ class TransactionsHandler {
   }
 
   postTransactionHandler(request, h) {
-    try {
-      this._validator.validateTransactionPayload(request.payload);
-      const { type, amount, category, description } = request.payload;
-      const transaction = this._service.addTransaction({ type, amount, category, description });
+    this._validator.validateTransactionPayload(request.payload);
+    const { type, amount, category, description } = request.payload;
+    const transaction = this._service.addTransaction({ type, amount, category, description });
 
-      return h
-        .response({
-          status: 'success',
-          message: 'data successfully added',
-          data: transaction,
-        })
-        .code(200);
-    } catch (error) {
-      return h
-        .response({
-          status: 'fail',
-          message: error.message,
-        })
-        .code(404);
-    }
+    return h
+      .response({
+        status: 'success',
+        message: 'data successfully added',
+        data: transaction,
+      })
+      .code(201);
   }
 
   getAllTransactionsHandler() {
@@ -44,72 +33,47 @@ class TransactionsHandler {
   }
 
   getTransactionByIdHandler(request, h) {
-    try {
-      const { id } = request.params;
-      const transaction = this._service.getTransactionById(id);
+    const { id } = request.params;
+    const transaction = this._service.getTransactionById(id);
 
-      if (!id) {
-        throw new Error('Transaction ID is missing!');
-      }
-
-      return h
-        .response({
-          status: 'success',
-          data: {
-            transaction,
-          },
-        })
-        .code(200);
-    } catch (error) {
-      return h.response({
-        status: 'fail',
-        message: error.message,
-      });
+    if (!id) {
+      throw new Error('Transaction ID is missing!');
     }
+
+    return h
+      .response({
+        status: 'success',
+        data: {
+          transaction,
+        },
+      })
+      .code(201);
   }
 
   putTransactionByIdHandler(request, h) {
-    try {
-      this._validator.validateTransactionPayload(request.payload);
-      const { id } = request.params;
-      const { type, amount, category, description } = request.payload;
-      this._service.editTransactionById({ id, type, amount, category, description });
+    this._validator.validateTransactionPayload(request.payload);
+    const { id } = request.params;
+    const { type, amount, category, description } = request.payload;
+    this._service.editTransactionById({ id, type, amount, category, description });
 
-      return h
-        .response({
-          status: 'success',
-          message: 'transaction successfully updated',
-        })
-        .code(200);
-    } catch (error) {
-      return h
-        .response({
-          status: 'fail',
-          message: error.message,
-        })
-        .code(404);
-    }
+    return h
+      .response({
+        status: 'success',
+        message: 'transaction successfully updated',
+      })
+      .code(200);
   }
 
   deleteTransactionByIdHandler(request, h) {
-    try {
-      const { id } = request.params;
-      this._service.deleteTransactionById(id);
+    const { id } = request.params;
+    this._service.deleteTransactionById(id);
 
-      return h
-        .response({
-          status: 'success',
-          message: 'transaction successfully deleted',
-        })
-        .code(200);
-    } catch (error) {
-      return h
-        .response({
-          status: 'fail',
-          message: error.message,
-        })
-        .code(404);
-    }
+    return h
+      .response({
+        status: 'success',
+        message: 'transaction successfully deleted',
+      })
+      .code(200);
   }
 }
 

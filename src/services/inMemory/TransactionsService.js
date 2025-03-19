@@ -1,4 +1,6 @@
 const { nanoid } = require('nanoid');
+const InvariantError = require('../../exceptions/InvariantError');
+const NotFoundError = require('../../exceptions/NotFoundError');
 
 class TransactionsService {
   constructor() {
@@ -16,7 +18,7 @@ class TransactionsService {
     const transaction = this._transactions.filter(transaction => transaction.id === id)[0];
 
     if (!transaction) {
-      throw new Error('data failed to add');
+      throw new InvariantError('data failed to add');
     }
 
     return transaction;
@@ -30,7 +32,7 @@ class TransactionsService {
     const transaction = this._transactions.filter(transaction => transaction.id === id)[0];
 
     if (!transaction) {
-      throw new Error('transaction not found');
+      throw new NotFoundError('transaction not found');
     }
 
     return transaction;
@@ -39,7 +41,7 @@ class TransactionsService {
   editTransactionById({ id, type, amount, category, description }) {
     const index = this._transactions.findIndex(transaction => transaction.id === id);
     if (index === -1) {
-      throw new Error('transaction failed to edit, id not found');
+      throw new NotFoundError('transaction failed to edit, id not found');
     }
     const updatedAt = new Date().toISOString();
 
@@ -57,7 +59,7 @@ class TransactionsService {
     const index = this._transactions.findIndex(transaction => transaction.id === id);
 
     if (index === -1) {
-      throw new Error('transaction failed to delete, id not found');
+      throw new NotFoundError('transaction failed to delete, id not found');
     }
 
     this._transactions.splice(index, 1);
