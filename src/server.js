@@ -3,6 +3,7 @@ const Hapi = require('@hapi/hapi');
 // const helloPlugin = require('../plugins/helloPlugin');
 const transactions = require('./api/transactions');
 const TransactionsService = require('./services/inMemory/TransactionsService');
+const TransactionsValidator = require('./validator/transactions');
 
 const init = async () => {
   const transactionsService = new TransactionsService();
@@ -20,6 +21,7 @@ const init = async () => {
     plugin: transactions,
     options: {
       service: transactionsService,
+      validator: TransactionsValidator,
     },
   });
 

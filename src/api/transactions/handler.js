@@ -1,8 +1,9 @@
 const transactions = require('.');
 
 class TransactionsHandler {
-  constructor(service) {
+  constructor(service, validator) {
     this._service = service;
+    this._validator = validator;
     this.postTransactionHandler = this.postTransactionHandler.bind(this);
     this.getAllTransactionsHandler = this.getAllTransactionsHandler.bind(this);
     this.getTransactionByIdHandler = this.getTransactionByIdHandler.bind(this);
@@ -12,6 +13,7 @@ class TransactionsHandler {
 
   postTransactionHandler(request, h) {
     try {
+      this._validator.validateTransactionPayload(request.payload);
       const { type, amount, category, description } = request.payload;
       const transaction = this._service.addTransaction({ type, amount, category, description });
 
@@ -19,9 +21,7 @@ class TransactionsHandler {
         .response({
           status: 'success',
           message: 'data successfully added',
-          data: {
-            transaction,
-          },
+          data: transaction,
         })
         .code(200);
     } catch (error) {
@@ -70,6 +70,7 @@ class TransactionsHandler {
 
   putTransactionByIdHandler(request, h) {
     try {
+      this._validator.validateTransactionPayload(request.payload);
       const { id } = request.params;
       const { type, amount, category, description } = request.payload;
       this._service.editTransactionById({ id, type, amount, category, description });
