@@ -7,7 +7,7 @@ const routes = handler => [
   {
     method: 'GET',
     path: '/transactions',
-    handler: handler.getAllTransactionsHandler,
+    handler: handler.getTransactionsHandler,
   },
   {
     method: 'GET',
