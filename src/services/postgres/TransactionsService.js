@@ -42,7 +42,7 @@ class TransactionsService {
     const result = await this._pool.query(query);
 
     if (!result.rows.length) {
-      throw new NotFoundError('transaction failed to edit, id not found');
+      throw new NotFoundError('transaction not found');
     }
 
     return result.rows.map(mapDBToModel);

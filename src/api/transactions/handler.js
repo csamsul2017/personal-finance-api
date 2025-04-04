@@ -1,18 +1,21 @@
+const autoBind = require('auto-bind');
+
 class TransactionsHandler {
   constructor(service, validator) {
     this._service = service;
     this._validator = validator;
-    this.postTransactionHandler = this.postTransactionHandler.bind(this);
-    this.getTransactionsHandler = this.getTransactionsHandler.bind(this);
-    this.getTransactionByIdHandler = this.getTransactionByIdHandler.bind(this);
-    this.putTransactionByIdHandler = this.putTransactionByIdHandler.bind(this);
-    this.deleteTransactionByIdHandler = this.deleteTransactionByIdHandler.bind(this);
+    autoBind(this);
   }
 
   async postTransactionHandler(request, h) {
     this._validator.validateTransactionPayload(request.payload);
     const { type, amount, category, description } = request.payload;
-    const transactionId = await this._service.addTransaction({ type, amount, category, description });
+    const transactionId = await this._service.addTransaction({
+      type,
+      amount,
+      category,
+      description,
+    });
 
     return h
       .response({
@@ -36,10 +39,6 @@ class TransactionsHandler {
     const { id } = request.params;
     const transaction = await this._service.getTransactionById(id);
 
-    if (!id) {
-      throw new Error('Transaction ID is missing!');
-    }
-
     return h
       .response({
         status: 'success',
@@ -54,7 +53,13 @@ class TransactionsHandler {
     this._validator.validateTransactionPayload(request.payload);
     const { id } = request.params;
     const { type, amount, category, description } = request.payload;
-    await this._service.editTransactionById({ id, type, amount, category, description });
+    await this._service.editTransactionById({
+      id,
+      type,
+      amount,
+      category,
+      description,
+    });
 
     return h
       .response({
