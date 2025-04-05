@@ -1,5 +1,6 @@
 require('dotenv').config();
 const Hapi = require('@hapi/hapi');
+const Jwt = require('@hapi/jwt');
 // Transactions
 const transactions = require('./api/transactions');
 const TransactionsService = require('./services/postgres/TransactionsService');
@@ -9,10 +10,16 @@ const users = require('./api/users');
 const UsersService = require('./services/postgres/UsersService');
 const UsersValidator = require('./validator/users');
 const ClientError = require('./exceptions/ClientError');
+// Auths
+const auths = require('./api/auths');
+const AuthsService = require('./services/postgres/AuthsService');
+const TokenManager = require('./tokenize/TokenManager');
+const AuthsValidator = require('./validator/auths');
 
 const init = async () => {
   const transactionsService = new TransactionsService();
   const usersService = new UsersService();
+  const authsService = new AuthsService();
   const server = Hapi.server({
     port: process.env.PORT || 3000,
     host: process.env.HOST || 'localhost',
@@ -21,6 +28,30 @@ const init = async () => {
         origin: ['*'],
       },
     },
+  });
+
+  // registrasi plugin eksternal
+  await server.register([
+    {
+      plugin: Jwt,
+    },
+  ]);
+
+  // mendefinisikan strategy autentikasi jwt
+  server.auth.strategy('financeapp_jwt', 'jwt', {
+    keys: process.env.ACCESS_TOKEN_KEY,
+    verify: {
+      aud: false,
+      iss: false,
+      sub: false,
+      maxAgeSec: process.env.ACCESS_TOKEN_AGE,
+    },
+    validate: (artifacts) => ({
+      isValid: true,
+      credentials: {
+        id: artifacts.decoded.payload.id,
+      },
+    }),
   });
 
   await server.register([
@@ -36,6 +67,15 @@ const init = async () => {
       options: {
         service: usersService,
         validator: UsersValidator,
+      },
+    },
+    {
+      plugin: auths,
+      options: {
+        authsService,
+        usersService,
+        tokenManager: TokenManager,
+        validator: AuthsValidator,
       },
     },
   ]);

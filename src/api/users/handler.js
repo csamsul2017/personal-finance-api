@@ -1,5 +1,4 @@
 const autoBind = require('auto-bind');
-const { user } = require('pg/lib/defaults');
 
 class UsersHandler {
   constructor(service, validator) {
