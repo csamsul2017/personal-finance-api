@@ -10,11 +10,14 @@ class TransactionsHandler {
   async postTransactionHandler(request, h) {
     this._validator.validateTransactionPayload(request.payload);
     const { type, amount, category, description } = request.payload;
+    const { id: credentialId } = request.auth.credentials;
+
     const transactionId = await this._service.addTransaction({
       type,
       amount,
       category,
       description,
+      owner: credentialId,
     });
 
     return h
@@ -26,8 +29,9 @@ class TransactionsHandler {
       .code(201);
   }
 
-  async getTransactionsHandler() {
-    const transactions = await this._service.getTransactions();
+  async getTransactionsHandler(request) {
+    const { id: credentialId } = request.auth.credentials;
+    const transactions = await this._service.getTransactions(credentialId);
 
     return {
       status: 'success',
@@ -37,21 +41,26 @@ class TransactionsHandler {
 
   async getTransactionByIdHandler(request, h) {
     const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+
+    await this._service.verifyTransactionOwner(id, credentialId);
     const transaction = await this._service.getTransactionById(id);
 
-    return h
-      .response({
-        status: 'success',
-        data: {
-          transaction,
-        },
-      })
-      .code(201);
+    // console.log(transaction);
+    return h.response({
+      status: 'success',
+      data: {
+        transaction,
+      },
+    });
   }
 
   async putTransactionByIdHandler(request, h) {
     this._validator.validateTransactionPayload(request.payload);
     const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+
+    await this._service.verifyTransactionOwner(id, credentialId);
     const { type, amount, category, description } = request.payload;
     await this._service.editTransactionById({
       id,
@@ -71,6 +80,9 @@ class TransactionsHandler {
 
   async deleteTransactionByIdHandler(request, h) {
     const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+    await this._service.verifyTransactionOwner(id, credentialId);
+
     await this._service.deleteTransactionById(id);
 
     return h

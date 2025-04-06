@@ -2,6 +2,7 @@ const { Pool } = require('pg');
 const { nanoid } = require('nanoid');
 const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
+const AuthorizationError = require('../../exceptions/AuthorizationError');
 const { mapDBToModel } = require('../../utils');
 
 class TransactionsService {
@@ -9,14 +10,40 @@ class TransactionsService {
     this._pool = new Pool();
   }
 
-  async addTransaction({ type, amount, category, description }) {
+  async verifyTransactionOwner(id, owner) {
+    const query = {
+      text: 'SELECT * FROM finance WHERE id = $1',
+      values: [id],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rows.length) {
+      throw new NotFoundError('Transaction not found');
+    }
+    const note = result.rows[0];
+    if (note.owner !== owner) {
+      throw new AuthorizationError(
+        'You are not authorized to access this resource',
+      );
+    }
+  }
+
+  async addTransaction({ type, amount, category, description, owner }) {
     const id = nanoid(16);
     const createdAt = new Date().toISOString();
     const updatedAt = createdAt;
 
     const query = {
-      text: 'INSERT INTO finance VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING ID',
-      values: [id, type, amount, category, description, createdAt, updatedAt],
+      text: 'INSERT INTO finance VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING ID',
+      values: [
+        id,
+        type,
+        amount,
+        category,
+        description,
+        createdAt,
+        updatedAt,
+        owner,
+      ],
     };
 
     const result = await this._pool.query(query);
@@ -28,8 +55,13 @@ class TransactionsService {
     return result.rows[0].id;
   }
 
-  async getTransactions() {
-    const result = await this._pool.query('SELECT * FROM finance');
+  async getTransactions(owner) {
+    const query = {
+      text: 'SELECT * FROM finance WHERE owner = $1',
+      values: [owner],
+    };
+    const result = await this._pool.query(query);
+    // console.log(result.rows);
     return result.rows.map(mapDBToModel);
   }
 
@@ -40,12 +72,15 @@ class TransactionsService {
     };
 
     const result = await this._pool.query(query);
-
+    // console.log(credentialId);
+    // console.log(result.rows);
     if (!result.rows.length) {
       throw new NotFoundError('transaction not found');
     }
 
-    return result.rows.map(mapDBToModel);
+    // console.log(result.rows[0]);
+    // return result.rows[0].map(mapDBToModel)
+    return mapDBToModel(result.rows[0]);
   }
 
   async editTransactionById({ id, type, amount, category, description }) {
