@@ -43,7 +43,7 @@ class TransactionsHandler {
     const { id } = request.params;
     const { id: credentialId } = request.auth.credentials;
 
-    await this._service.verifyTransactionOwner(id, credentialId);
+    await this._service.verifyTransactionAccess(id, credentialId);
     const transaction = await this._service.getTransactionById(id);
 
     // console.log(transaction);
@@ -60,15 +60,8 @@ class TransactionsHandler {
     const { id } = request.params;
     const { id: credentialId } = request.auth.credentials;
 
-    await this._service.verifyTransactionOwner(id, credentialId);
-    const { type, amount, category, description } = request.payload;
-    await this._service.editTransactionById({
-      id,
-      type,
-      amount,
-      category,
-      description,
-    });
+    await this._service.verifyTransactionAccess(id, credentialId);
+    await this._service.editTransactionById(id, request.payload);
 
     return h
       .response({
