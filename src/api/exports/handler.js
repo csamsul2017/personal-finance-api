@@ -15,7 +15,10 @@ class ExportsHandler {
       targetEmail: request.payload.targetEmail,
     };
 
-    await this._service.sendMessage('export:notes', JSON.stringify(message));
+    await this._service.sendMessage(
+      'export:transactions',
+      JSON.stringify(message),
+    );
 
     return h
       .response({

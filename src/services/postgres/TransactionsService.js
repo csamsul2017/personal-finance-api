@@ -6,9 +6,10 @@ const AuthorizationError = require('../../exceptions/AuthorizationError');
 const { mapDBToModel } = require('../../utils');
 
 class TransactionsService {
-  constructor(collaborationService) {
+  constructor(collaborationService, cacheService) {
     this._pool = new Pool();
     this._collaborationService = collaborationService;
+    this._cacheService = cacheService;
   }
 
   async verifyTransactionOwner(id, owner) {
@@ -71,21 +72,34 @@ class TransactionsService {
       throw new InvariantError('data failed to add');
     }
 
+    await this._cacheService.delete(`transactions:${owner}`);
     return result.rows[0].id;
   }
 
   async getTransactions(owner) {
-    const query = {
-      text: `SELECT finance.* FROM finance
-    LEFT JOIN collaborations ON collaborations.transaction_id = finance.id
-    WHERE finance.owner = $1 OR collaborations.user_id = $1
-    GROUP BY finance.id`,
-      values: [owner],
-    };
+    try {
+      const result = await this._cacheService.get(`notes:${owner}`);
+      return JSON.parse(result);
+    } catch (error) {
+      const query = {
+        text: `SELECT finance.* FROM finance
+      LEFT JOIN collaborations ON collaborations.transaction_id = finance.id
+      WHERE finance.owner = $1 OR collaborations.user_id = $1
+      GROUP BY finance.id`,
+        values: [owner],
+      };
 
-    const result = await this._pool.query(query);
-    // console.log(result.rows);
-    return result.rows.map(mapDBToModel);
+      const result = await this._pool.query(query);
+      const mappedResult = result.rows.map(mapDBToModel);
+
+      // transaksi akan disimpan pada cache sebelum fungsi getTransactions dikembalikan
+      await this._cacheService.set(
+        `transactions:${owner}`,
+        JSON.stringify(mappedResult),
+      );
+
+      return mappedResult;
+    }
   }
 
   async getTransactionById(id) {
@@ -118,6 +132,9 @@ class TransactionsService {
     if (!result.rows.length) {
       throw new NotFoundError('transaction failed to edit, id not found');
     }
+
+    const { owner } = result.rows[0];
+    await this._cacheService.delete(`transactions:${owner}`);
   }
 
   async deleteTransactionById(id) {
@@ -130,6 +147,9 @@ class TransactionsService {
     if (!result.rows.length) {
       throw new NotFoundError('transaction failed to delete, id not found');
     }
+
+    const { owner } = result.rows[0];
+    await this._cacheService.delete(`transactions:${owner}`);
   }
 }
 
